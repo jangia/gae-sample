@@ -2,6 +2,7 @@
 import os
 import jinja2
 import webapp2
+from models import Sporocilo
 
 
 template_dir = os.path.join(os.path.dirname(__file__), "templates")
@@ -36,11 +37,32 @@ class RezultatHandler(BaseHandler):
     def post(self):
         dodatno = ' je vpisal: '
         rezultat = self.request.get('vnos')
+
+        sporocilo = Sporocilo(vnos=rezultat)
+        sporocilo.put()
+
         skupaj = dodatno + rezultat # zdruzimo zgornja dva stringa v enega
         return self.write(skupaj)
+
+
+class SeznamSporocilHandler(BaseHandler):
+
+    def get(self):
+        seznam = Sporocilo.query().fetch()
+        parametri = {"seznam": seznam}
+        return self.render_template("seznam_sporocil.html",params=parametri)
+
+
+class PosameznoSporociloHandler(BaseHandler):
+    def get(self, sporocilo_id):
+        sporocilo = Sporocilo.get_by_id(int(sporocilo_id))
+        params = {"sporocilo": sporocilo}
+        return self.render_template("sporocilo.html", params=params)
 
 
 app = webapp2.WSGIApplication([
     webapp2.Route('/', MainHandler),
     webapp2.Route('/rezultat', RezultatHandler),
+    webapp2.Route('/seznam-sporocil', SeznamSporocilHandler),
+    webapp2.Route('/sporocilo/<sporocilo_id:\d+>', PosameznoSporociloHandler),
 ], debug=True)
